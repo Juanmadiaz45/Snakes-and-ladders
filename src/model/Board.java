@@ -24,6 +24,67 @@ public class Board {
         player3 = new Player("#", firstSquare);
     }
 
+    public void movePlayer(Player player, int numSquares) {
+        Square currentSquare = player.getCurrentSquare();
+        movePlayerRecursive(player, currentSquare, numSquares);
+    }
+    
+    private void movePlayerRecursive(Player player, Square currentSquare, int numSquares) {
+        if (numSquares == 0 || currentSquare == null) {
+            return;
+        }
+        Square nextSquare = currentSquare.getMoveSquare();
+        player.setCurrentSquare(nextSquare);
+        movePlayerRecursive(player, nextSquare, numSquares - 1);
+    }
+
+    public void playGame(int option2) {
+        Player currentPlayer = player1;
+    
+        while (true) {
+            System.out.println("Jugador " + currentPlayer.getSymbol() + ", es tu turno");
+            System.out.println("1. Tirar dado");
+            System.out.println("2. Ver escaleras y serpientes");
+    
+            switch (option2) {
+                case 1:
+                    int roll = (int) (Math.random() * 6) + 1;
+                    System.out.println("Has sacado un " + roll);
+    
+                    movePlayer(currentPlayer, roll);
+    
+                    Square currentSquare = currentPlayer.getCurrentSquare();
+    
+                    if (currentSquare.isSnake()) {
+                        System.out.println("Te has caído en una serpiente!");
+                        movePlayer(currentPlayer, -2);
+                    } else if (currentSquare.isLadder()) {
+                        System.out.println("Has subido por una escalera!");
+                        movePlayer(currentPlayer, 2);
+                    }
+    
+                    if (currentSquare == lastSquare) {
+                        System.out.println("¡Felicidades, jugador " + currentPlayer.getSymbol() + ", has ganado!");
+                        return;
+                    }
+    
+                    break;
+                case 2:
+                    printBoard();
+                    break;
+            }
+    
+            if (currentPlayer == player1) {
+                currentPlayer = player2;
+            } else if (currentPlayer == player2) {
+                currentPlayer = player3;
+            } else {
+                currentPlayer = player1;
+            }
+        }
+    }
+    
+
     private Square createBoard(int squareId) {
         if (squareId > numRows * numColumns) {
             return null;
@@ -126,20 +187,28 @@ public class Board {
     }
 
     public void printBoard() {
-        printBoardRecursive(1, 1);
+        printBoardRecursive(numRows, 1);
     }
     
     private void printBoardRecursive(int row, int column) {
-        if (row > this.numRows) {
+        if (row < 1) {
             return;
         }
-        if (column > this.numColumns) {
+        if (column > numColumns) {
             System.out.println();
-            printBoardRecursive(row + 1, 1);
+            printBoardRecursive(row - 1, 1);
             return;
         }
-        int number = getNumber(row, column);
-        System.out.print("[" + number + "] ");
+        Square currentSquare = getSquare((row - 1) * numColumns + column);
+        if (player1.getCurrentSquare() == currentSquare) {
+            System.out.print("[1$" + player1.getSymbol() + "%] ");
+        } else if (player2.getCurrentSquare() == currentSquare) {
+            System.out.print("[2*" + player2.getSymbol() + "] ");
+        } else if (player3.getCurrentSquare() == currentSquare) {
+            System.out.print("[3" + player3.getSymbol() + "] ");
+        } else {
+            System.out.print("[" + currentSquare.getSquareId() + "] ");
+        }
         printBoardRecursive(row, column + 1);
     }
     
@@ -148,6 +217,50 @@ public class Board {
             return ((this.numRows - row) * this.numColumns) + (this.numColumns - column + 1);
         } else {
             return ((this.numRows - row) * this.numColumns) + column;
+        }
+    }
+
+    public void printSnakesAndLadders() {
+        printSnakesAndLaddersRecursive(1, 1);
+    }
+    
+    private void printSnakesAndLaddersRecursive(int row, int column) {
+        if (row > this.numRows) {
+            return;
+        }
+        if (column > this.numColumns) {
+            System.out.println();
+            printSnakesAndLaddersRecursive(row + 1, 1);
+            return;
+        }
+        Square square = getSquare(getNumber(row, column));
+        if (square.isSnake() || square.isLadder()) {
+            String symbol = square.isSnake() ? "S" : "L";
+            int number = square.isSnake() ? getSnakeNumber(square) : getLadderNumber(square);
+            System.out.print("[" + symbol + number + "] ");
+        } else {
+            System.out.print("[ ] ");
+        }
+        printSnakesAndLaddersRecursive(row, column + 1);
+    }
+    
+    private int getSnakeNumber(Square square) {
+        if (square.isSnake() && square.getMoveSquare() != null) {
+            int nextSquareId = square.getMoveSquare().getSquareId();
+            int snakeNumber = 1 + getSnakeNumber(getSquare(nextSquareId));
+            return snakeNumber;
+        } else {
+            return 0;
+        }
+    }
+    
+    private int getLadderNumber(Square square) {
+        if (square.isLadder() && square.getMoveSquare() != null) {
+            int nextSquareId = square.getMoveSquare().getSquareId();
+            int ladderNumber = 1 + getLadderNumber(getSquare(nextSquareId));
+            return ladderNumber;
+        } else {
+            return 0;
         }
     }
 

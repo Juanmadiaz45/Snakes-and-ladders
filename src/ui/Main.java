@@ -44,6 +44,7 @@ public class Main {
 	public void executeOption(int option){
 
         int rows = 0;
+		int option2 = 0;
         int columns = 0;
         int numSnakes = 0;
         int numLadders = 0;
@@ -72,6 +73,14 @@ public class Main {
 
 				System.out.println("\n");
 
+				controller.playGame(option2);
+				option2 = reader.nextInt();
+
+				System.out.println("\n");
+
+				controller.printScoreBoard();
+
+				System.out.println("\n");
 
 				break;
 
